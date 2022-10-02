@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+
+  telegraf:
+    build:
+      context: telegraf
+      dockerfile: Dockerfile
+    volumes:
+    - ./telegraf/etc/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    - ./telegraf/plugins:/opt/plugins
+    env_file:
+      - .secrets.env
+    depends_on:
+      - influxdb
+    links:
+      - influxdb:influxdb
+    ports:
+      - 127.0.0.1:8125:8125/udp
+
+  influxdb:
+    container_name: influxdb
+    image: influxdb:2.4.0-alpine
+    volumes:
+      - influxdb-lib:/var/lib/influxdb2
+      - ./telegraf/etc/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    environment:
+      - INFLUXDB_HTTP_PING_AUTH_ENALBED=false
+    ports:
+      - 127.0.0.1:8086:8086
+    restart: always
+    privileged: true
+    healthcheck:
+      test: wget --tries=1 -qO- http://localhost:8086/health | grep -q pass
+      interval: 5s 
+      timeout: 5s
+      retries: 30
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana-oss:9.1.6
+    volumes:
+      - ./grafana/etc:/etc/grafana:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-lib:/var/lib/grafana
+      - grafana-log:/var/log/grafana
+    links:
+      - influxdb:influxdb
+    env_file:
+      - .secrets.env
+    ports:
+      - 127.0.0.1:3000:3000
+    depends_on:
+      - influxdb
+    restart: always
+    privileged: true
+
+volumes:
+  influxdb-lib:
+    external: false
+
+  grafana-lib:
+    external: false
+
+  grafana-log:
+    external: false
