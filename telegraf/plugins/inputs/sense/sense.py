@@ -47,13 +47,13 @@ def _output_solar_aux(data):
     print_influxdb_format(
         measurement=SENSE_MAINS,
         tags=dict(leg=LEG1),
-        fields=dict(watts=data['aux']['solar'][0]),
+        fields=dict(solar_watts=data['aux']['solar'][0]),
         nano_timestamp=data['epoch']
     )
     print_influxdb_format(
         measurement=SENSE_MAINS,
         tags=dict(leg=LEG2),
-        fields=dict(watts=data['aux']['solar'][1]),
+        fields=dict(solar_watts=data['aux']['solar'][1]),
         nano_timestamp=data['epoch']
     )
 
